@@ -70,6 +70,12 @@ jobs:
           path: upstream
           persist-credentials: false
 
+      - name: Select the bundled dictionary profile
+        if: steps.release.outputs.version != ''
+        shell: pwsh
+        working-directory: upstream
+        run: ./tools/dictionary/use_merge_ut_profile.ps1 -Profile sample
+
       - name: Build and package Mozkey
         if: steps.release.outputs.version != ''
         env:
