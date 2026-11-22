@@ -94,18 +94,15 @@ jobs:
           path: ${{ runner.temp }}/packages/*.deb
           if-no-files-found: error
 
-  publish:
+  prepare-pages:
     if: needs.build.outputs.version != ''
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      artifact: github-pages-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -126,12 +123,26 @@ jobs:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
         run: scripts/sign-repo.sh site
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: site
 
-      - uses: actions/deploy-pages@v4
+  publish:
+    needs: prepare-pages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v5
         id: deployment
+        with:
+          artifact_name: ${{ needs.prepare-pages.outputs.artifact }}
 
   keep-schedule-active:
     if: github.event.schedule == '31 3 1 * *'
