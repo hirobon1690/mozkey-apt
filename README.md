@@ -8,7 +8,7 @@ GitHub Actions が安定版リリースを6時間ごとに確認し、新しい�
 対象は Ubuntu 24.04 以降の amd64 です。Debian 系の他のディストリビューションでは、依存パッケージを解決できることが条件です。
 
 ```sh
-base=https://blog.hirobon1690.com/mozkey-apt
+base=https://hirobon1690.github.io/mozkey-apt
 sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL "$base/mozkey-archive-keyring.gpg" -o /tmp/mozkey-archive-keyring.gpg
 gpg --show-keys --with-fingerprint /tmp/mozkey-archive-keyring.gpg
