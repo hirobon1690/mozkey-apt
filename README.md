@@ -9,8 +9,7 @@ Unofficial [Mozkey](https://github.com/koyasi777/mozkey) apt repository.
 ## Install
 Add the APT source with its embedded signing key:
 ```sh
-sudo curl -fsSLo /etc/apt/sources.list.d/mozkey.sources \
-  https://raw.githubusercontent.com/hirobon1690/mozkey-apt/main/mozkey.sources
+sudo curl -fsSLo /etc/apt/sources.list.d/mozkey.sources https://raw.githubusercontent.com/hirobon1690/mozkey-apt/main/mozkey.sources
 ```
 
 Install:
