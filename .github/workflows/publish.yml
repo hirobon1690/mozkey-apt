@@ -21,6 +21,7 @@ jobs:
       contents: read
       pages: read
     outputs:
+      tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/configure-pages@v5
@@ -100,7 +101,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      contents: read
+      contents: write
     outputs:
       artifact: github-pages-${{ github.run_attempt }}
     steps:
@@ -112,6 +113,29 @@ jobs:
         with:
           name: mozkey-deb
           path: site/pool
+
+      - name: Publish the Debian package on GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          asset="ibus-mozkey_${VERSION}_amd64.deb"
+          package="site/pool/$asset"
+          test "$(dpkg-deb -f "$package" Version)" = "$VERSION"
+          if gh release view "$TAG" --json assets --jq '.assets[].name' > "$RUNNER_TEMP/release-assets"; then
+            if grep -Fxq "$asset" "$RUNNER_TEMP/release-assets"; then
+              # Keep the Release and APT downloads identical across retries.
+              gh release download "$TAG" --pattern "$asset" --dir site/pool --clobber
+            else
+              gh release upload "$TAG" "$package"
+            fi
+          else
+            gh release create "$TAG" "$package" --target "$GITHUB_SHA" --title "Mozkey $TAG" \
+              --notes "Unofficial Debian package for the [upstream Mozkey $TAG release](https://github.com/koyasi777/mozkey/releases/tag/$TAG)."
+          fi
+          test "$(dpkg-deb -f "$package" Version)" = "$VERSION"
 
       - name: Prepare APT tools
         run: |
