@@ -1,4 +1,4 @@
-# Mozkey APT
+# mozkey-apt
 ## About
 Unofficial [Mozkey](https://github.com/koyasi777/mozkey) apt repository.
 
