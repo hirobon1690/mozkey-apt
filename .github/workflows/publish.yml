@@ -1,0 +1,144 @@
+name: Publish Mozkey APT
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+    - cron: '31 3 1 * *'
+
+permissions: {}
+
+concurrency:
+  group: mozkey-apt-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.schedule != '31 3 1 * *'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/configure-pages@v5
+        id: pages
+
+      - name: Check the latest stable release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          tag=$(gh api repos/koyasi777/mozkey/releases/latest --jq .tag_name)
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected Mozkey release tag: $tag"
+            exit 1
+          fi
+          version="${tag#v}-1"
+          site_url=${SITE_URL/#http:/https:}
+          status=$(curl --silent --show-error --location --retry 3 --max-time 60 \
+            --output "$RUNNER_TEMP/apt-version" --write-out '%{http_code}' \
+            "${site_url%/}/version.txt")
+          case "$status" in
+            200)
+              previous=$(cat "$RUNNER_TEMP/apt-version")
+              dpkg --validate-version "$previous"
+              if dpkg --compare-versions "$version" le "$previous"; then
+                echo "APT already hosts $previous."
+                exit 0
+              fi
+              ;;
+            404) ;;
+            *) echo "::error::Cannot check the published APT version (HTTP $status)."; exit 1 ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6
+        if: steps.release.outputs.version != ''
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@v6
+        if: steps.release.outputs.version != ''
+        with:
+          repository: koyasi777/mozkey
+          ref: refs/tags/${{ steps.release.outputs.tag }}
+          path: upstream
+          persist-credentials: false
+
+      - name: Build and package Mozkey
+        if: steps.release.outputs.version != ''
+        env:
+          ANDROID_NDK_HOME: ''
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev libibus-1.0-dev qt6-base-dev
+          (cd upstream/src && bazelisk build --config release_build //:package)
+          scripts/build-deb.sh upstream "$VERSION" "$RUNNER_TEMP/packages"
+
+      - uses: actions/upload-artifact@v6
+        if: steps.release.outputs.version != ''
+        with:
+          name: mozkey-deb
+          path: ${{ runner.temp }}/packages/*.deb
+          if-no-files-found: error
+
+  publish:
+    if: needs.build.outputs.version != ''
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: mozkey-deb
+          path: site/pool
+
+      - name: Prepare APT tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-utils gnupg
+
+      - name: Sign the APT repository
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: scripts/sign-repo.sh site
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
+
+  keep-schedule-active:
+    if: github.event.schedule == '31 3 1 * *'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record monthly repository activity
+        run: |
+          # GitHub disables schedules on public repositories after 60 inactive days.
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit --allow-empty -m "Keep the Mozkey APT schedule active"
+          git push
