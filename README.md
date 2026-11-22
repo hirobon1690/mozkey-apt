@@ -5,7 +5,7 @@ GitHub Actions が安定版リリースを6時間ごとに確認し、新しい�
 
 ## インストール
 
-対象は Ubuntu 24.04 以降の amd64 です。Debian 系の他のディストリビューションでは、依存パッケージを解決できることが条件です。
+対象は Ubuntu 24.04 以降と Debian 13 の amd64 です。
 
 ```sh
 base=https://hirobon1690.github.io/mozkey-apt

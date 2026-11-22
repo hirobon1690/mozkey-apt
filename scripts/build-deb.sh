@@ -46,6 +46,9 @@ EOF
 dependencies=$(dpkg-shlibdeps -O "${binaries[@]}")
 dependencies=${dependencies#shlibs:Depends=}
 test -n "$dependencies"
+# Ubuntu 24.04 and Debian 13 use different names for these Qt libraries.
+dependencies=$(sed -E \
+  's/(libqt6(gui|widgets)6)t64( \([^)]+\))/\1t64\3 | \1\3/g' <<< "$dependencies")
 
 cat > "$root/DEBIAN/control" <<EOF
 Package: $package
