@@ -4,6 +4,7 @@ set -euo pipefail
 source_dir=$(realpath "$1")
 version=$2
 output_dir=$(realpath -m "$3")
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 package=ibus-mozkey
 architecture=$(dpkg --print-architecture)
 dpkg --validate-version "$version"
@@ -32,7 +33,9 @@ doc="$root/usr/share/doc/$package"
 install -Dm644 "$source_dir/LICENSE" "$doc/copyright"
 install -m644 "$source_dir"/{AUTHORS,THIRD_PARTY_NOTICES.md} "$doc/"
 install -m644 "$source_dir/src/data/dictionary_oss/README.txt" "$doc/dictionary-notices.txt"
-install -m644 "$source_dir/src/data/installer/credits_en.html" "$doc/"
+install -m644 "$source_dir/src/data/installer/"{credits_en.html,DICTIONARY_NOTICES.md,SudachiDict-LEGAL.txt} "$doc/"
+install -m644 /usr/share/common-licenses/{GPL-3,LGPL-2.1,LGPL-3} "$doc/"
+install -m644 "$repo_dir/licenses/"{LINKED-LIBRARIES.txt,utf8_range-LICENSE.txt} "$doc/"
 
 cat > debian/control <<EOF
 Source: $package

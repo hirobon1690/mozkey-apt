@@ -37,7 +37,7 @@ jobs:
             echo "::error::Unexpected Mozkey release tag: $tag"
             exit 1
           fi
-          version="${tag#v}-1"
+          version="${tag#v}-2"
           site_url=${SITE_URL/#http:/https:}
           status=$(curl --silent --show-error --location --retry 3 --max-time 60 \
             --output "$RUNNER_TEMP/apt-version" --write-out '%{http_code}' \

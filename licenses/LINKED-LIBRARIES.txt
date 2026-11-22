@@ -1,0 +1,21 @@
+The mozc_tool and mozc_renderer binaries use the Qt 6 Core, Gui and Widgets
+shared libraries under the GNU Lesser General Public License version 3.
+See LGPL-3, GPL-3 and the Qt Base credits in credits_en.html.
+
+The IBus engine uses libibus and the GLib libraries GLib, GObject and GIO
+under the GNU Lesser General Public License version 2.1 or later.
+The Mozkey binaries also use the system GNU C Library under the GNU Lesser
+General Public License version 2.1 or later. See LGPL-2.1.
+
+These libraries are loaded from the system at runtime. You may use modified,
+interface-compatible versions and reverse engineer this package for the
+purpose of debugging your modifications to those libraries.
+
+The source packages are qt6-base, ibus, glib2.0 and glibc. To obtain the
+sources for your system libraries, enable source repositories for your
+distribution and use:
+
+    apt source qt6-base ibus glib2.0 glibc
+
+The bundled Protocol Buffers code includes utf8_range.
+See utf8_range-LICENSE.txt.
