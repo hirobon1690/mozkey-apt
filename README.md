@@ -18,3 +18,6 @@ Install:
 sudo apt update
 sudo apt install ibus-mozkey
 ```
+
+## Disclaimer
+- 100% vibe-coded, as-is
