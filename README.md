@@ -13,7 +13,7 @@ sudo install -d -m 0755 /etc/apt/keyrings
 curl -fsSL "https://hirobon1690.github.io/mozkey-apt/mozkey-archive-keyring.gpg" -o /tmp/mozkey-archive-keyring.gpg
 gpg --show-keys --with-fingerprint /tmp/mozkey-archive-keyring.gpg
 sudo install -m 0644 /tmp/mozkey-archive-keyring.gpg /etc/apt/keyrings/mozkey-archive-keyring.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/mozkey-archive-keyring.gpg] $https://hirobon1690.github.io/mozkey-apt/ ./" |
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/mozkey-archive-keyring.gpg] https://hirobon1690.github.io/mozkey-apt/ ./" |
 sudo tee /etc/apt/sources.list.d/mozkey.list >/dev/null
 ```
 
